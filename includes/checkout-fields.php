@@ -19,7 +19,7 @@ function frave_peru_conditional_fields(): array {
 }
 
 function frave_peru_checkout_fields( array $fields ): array {
-	$fields['billing']['billing_voucher_type'] = array(
+	$fields['billing']['billing_voucher_type']  = array(
 		'type'     => 'select',
 		'label'    => __( 'Comprobante de pago', 'frave-peru' ),
 		'required' => true,
@@ -28,7 +28,7 @@ function frave_peru_checkout_fields( array $fields ): array {
 		'class'    => array( 'form-row-wide' ),
 		'priority' => 21,
 	);
-	$fields['billing']['billing_id_type'] = array(
+	$fields['billing']['billing_id_type']       = array(
 		'type'     => 'select',
 		'label'    => __( 'Tipo de documento', 'frave-peru' ),
 		'options'  => frave_peru_id_types(),
@@ -36,7 +36,7 @@ function frave_peru_checkout_fields( array $fields ): array {
 		'class'    => array( 'form-row-first', 'frave-peru-boleta' ),
 		'priority' => 22,
 	);
-	$fields['billing']['billing_id_number'] = array(
+	$fields['billing']['billing_id_number']     = array(
 		'type'              => 'text',
 		'label'             => __( 'Número de documento', 'frave-peru' ),
 		'maxlength'         => 12,
@@ -44,12 +44,15 @@ function frave_peru_checkout_fields( array $fields ): array {
 		'custom_attributes' => array( 'autocomplete' => 'off' ),
 		'priority'          => 23,
 	);
-	$fields['billing']['billing_ruc'] = array(
+	$fields['billing']['billing_ruc']           = array(
 		'type'              => 'text',
 		'label'             => __( 'RUC', 'frave-peru' ),
 		'maxlength'         => 11,
 		'class'             => array( 'form-row-first', 'frave-peru-factura' ),
-		'custom_attributes' => array( 'autocomplete' => 'off', 'inputmode' => 'numeric' ),
+		'custom_attributes' => array(
+			'autocomplete' => 'off',
+			'inputmode'    => 'numeric',
+		),
 		'priority'          => 24,
 	);
 	$fields['billing']['billing_business_name'] = array(
@@ -185,7 +188,10 @@ function frave_peru_email_fields( array $fields, bool $sent_to_admin, $order ): 
 		return $fields;
 	}
 	foreach ( frave_peru_order_document_rows( $order ) as $label => $value ) {
-		$fields[ sanitize_key( $label ) ] = array( 'label' => $label, 'value' => $value );
+		$fields[ sanitize_key( $label ) ] = array(
+			'label' => $label,
+			'value' => $value,
+		);
 	}
 	return $fields;
 }
@@ -193,11 +199,30 @@ add_filter( 'woocommerce_email_order_meta_fields', 'frave_peru_email_fields', 10
 
 /** Show and edit the fields in the order screen, under the billing address. */
 function frave_peru_admin_billing_fields( array $fields, $order = false, string $context = 'edit' ): array {
-	$fields['voucher_type']  = array( 'label' => __( 'Comprobante', 'frave-peru' ), 'type' => 'select', 'options' => array( '' => '—' ) + frave_peru_voucher_types(), 'show' => true );
-	$fields['id_type']       = array( 'label' => __( 'Tipo de documento', 'frave-peru' ), 'type' => 'select', 'options' => array( '' => '—' ) + frave_peru_id_types(), 'show' => true );
-	$fields['id_number']     = array( 'label' => __( 'Número de documento', 'frave-peru' ), 'show' => true );
-	$fields['ruc']           = array( 'label' => __( 'RUC', 'frave-peru' ), 'show' => true );
-	$fields['business_name'] = array( 'label' => __( 'Razón social', 'frave-peru' ), 'show' => true );
+	$fields['voucher_type']  = array(
+		'label'   => __( 'Comprobante', 'frave-peru' ),
+		'type'    => 'select',
+		'options' => array( '' => '—' ) + frave_peru_voucher_types(),
+		'show'    => true,
+	);
+	$fields['id_type']       = array(
+		'label'   => __( 'Tipo de documento', 'frave-peru' ),
+		'type'    => 'select',
+		'options' => array( '' => '—' ) + frave_peru_id_types(),
+		'show'    => true,
+	);
+	$fields['id_number']     = array(
+		'label' => __( 'Número de documento', 'frave-peru' ),
+		'show'  => true,
+	);
+	$fields['ruc']           = array(
+		'label' => __( 'RUC', 'frave-peru' ),
+		'show'  => true,
+	);
+	$fields['business_name'] = array(
+		'label' => __( 'Razón social', 'frave-peru' ),
+		'show'  => true,
+	);
 
 	// The read-only summary shows option labels ("Boleta", "DNI") instead of stored codes.
 	if ( 'view' === $context && $order instanceof WC_Order ) {
@@ -229,7 +254,10 @@ function frave_peru_enqueue_checkout_script(): void {
 		FRAVE_PERU_URL . 'assets/checkout-fields.js',
 		array(),
 		FRAVE_PERU_VERSION,
-		array( 'strategy' => 'defer', 'in_footer' => true )
+		array(
+			'strategy'  => 'defer',
+			'in_footer' => true,
+		)
 	);
 }
 add_action( 'wp_enqueue_scripts', 'frave_peru_enqueue_checkout_script' );

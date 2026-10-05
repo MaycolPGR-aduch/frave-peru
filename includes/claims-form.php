@@ -162,7 +162,7 @@ function frave_peru_handle_claim_submission(): void {
 		return;
 	}
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-		define( 'DONOTCACHEPAGE', true );
+		define( 'DONOTCACHEPAGE', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Convention read by page cache plugins.
 	}
 	nocache_headers();
 
@@ -184,7 +184,12 @@ function frave_peru_handle_claim_submission(): void {
 	}
 
 	if ( $errors ) {
-		frave_peru_claim_form_state( array( 'values' => $values, 'errors' => $errors ) );
+		frave_peru_claim_form_state(
+			array(
+				'values' => $values,
+				'errors' => $errors,
+			)
+		);
 		return;
 	}
 
@@ -259,7 +264,7 @@ function frave_peru_claim_field( string $key, string $label, array $state, array
 	$value = (string) ( $state['values'][ $key ] ?? '' );
 	$max   = frave_peru_claim_max_lengths()[ $key ] ?? 0;
 
-	$attributes = array(
+	$attributes     = array(
 		'id'               => $id,
 		'name'             => 'claim[' . $key . ']',
 		'required'         => $args['required'] ? 'required' : '',
@@ -335,7 +340,20 @@ function frave_peru_claim_checkbox( string $key, string $label_html, array $stat
 	?>
 	<p class="frave-claims__checkbox<?php echo $error ? ' has-error' : ''; ?>">
 		<input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="claim[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( '1', (string) ( $state['values'][ $key ] ?? '' ) ); ?><?php echo $required ? ' required' : ''; ?><?php echo $error ? ' aria-invalid="true" aria-describedby="' . esc_attr( $id ) . '-error"' : ''; ?>>
-		<label for="<?php echo esc_attr( $id ); ?>"><?php echo wp_kses( $label_html, array( 'a' => array( 'href' => true, 'target' => true, 'rel' => true ) ) ); ?></label>
+		<label for="<?php echo esc_attr( $id ); ?>">
+		<?php
+		echo wp_kses(
+			$label_html,
+			array(
+				'a' => array(
+					'href'   => true,
+					'target' => true,
+					'rel'    => true,
+				),
+			)
+		);
+		?>
+					</label>
 		<?php if ( $error ) : ?>
 			<span class="frave-claims__error" id="<?php echo esc_attr( $id ); ?>-error"><?php echo esc_html( $error ); ?></span>
 		<?php endif; ?>
@@ -451,15 +469,58 @@ function frave_peru_render_claims_book(): string {
 				<?php
 				frave_peru_claim_field( 'first_name', __( 'Nombres', 'frave-peru' ), $state, array( 'autocomplete' => 'given-name' ) );
 				frave_peru_claim_field( 'last_name', __( 'Apellidos', 'frave-peru' ), $state, array( 'autocomplete' => 'family-name' ) );
-				frave_peru_claim_field( 'doc_type', __( 'Tipo de documento', 'frave-peru' ), $state, array( 'type' => 'select', 'options' => frave_peru_claim_document_types() ) );
+				frave_peru_claim_field(
+					'doc_type',
+					__( 'Tipo de documento', 'frave-peru' ),
+					$state,
+					array(
+						'type'    => 'select',
+						'options' => frave_peru_claim_document_types(),
+					)
+				);
 				frave_peru_claim_field( 'doc_number', __( 'Número de documento', 'frave-peru' ), $state, array( 'autocomplete' => 'off' ) );
-				frave_peru_claim_field( 'address', __( 'Domicilio', 'frave-peru' ), $state, array( 'autocomplete' => 'street-address', 'class' => 'frave-claims__field--wide' ) );
-				frave_peru_claim_field( 'phone', __( 'Teléfono', 'frave-peru' ), $state, array( 'type' => 'tel', 'autocomplete' => 'tel' ) );
-				frave_peru_claim_field( 'email', __( 'Correo electrónico', 'frave-peru' ), $state, array( 'type' => 'email', 'autocomplete' => 'email', 'help' => __( 'Te enviaremos aquí la constancia y la respuesta.', 'frave-peru' ) ) );
+				frave_peru_claim_field(
+					'address',
+					__( 'Domicilio', 'frave-peru' ),
+					$state,
+					array(
+						'autocomplete' => 'street-address',
+						'class'        => 'frave-claims__field--wide',
+					)
+				);
+				frave_peru_claim_field(
+					'phone',
+					__( 'Teléfono', 'frave-peru' ),
+					$state,
+					array(
+						'type'         => 'tel',
+						'autocomplete' => 'tel',
+					)
+				);
+				frave_peru_claim_field(
+					'email',
+					__( 'Correo electrónico', 'frave-peru' ),
+					$state,
+					array(
+						'type'         => 'email',
+						'autocomplete' => 'email',
+						'help'         => __( 'Te enviaremos aquí la constancia y la respuesta.', 'frave-peru' ),
+					)
+				);
 				?>
 			</div>
 			<?php frave_peru_claim_checkbox( 'is_minor', esc_html__( 'Soy menor de edad', 'frave-peru' ), $state ); ?>
-			<?php frave_peru_claim_field( 'guardian', __( 'Nombre del padre, madre o apoderado', 'frave-peru' ), $state, array( 'required' => false, 'help' => __( 'Obligatorio solo si el reclamante es menor de edad.', 'frave-peru' ) ) ); ?>
+			<?php
+			frave_peru_claim_field(
+				'guardian',
+				__( 'Nombre del padre, madre o apoderado', 'frave-peru' ),
+				$state,
+				array(
+					'required' => false,
+					'help'     => __( 'Obligatorio solo si el reclamante es menor de edad.', 'frave-peru' ),
+				)
+			);
+			?>
 		</fieldset>
 
 		<fieldset class="frave-claims__section">
@@ -474,8 +535,25 @@ function frave_peru_render_claims_book(): string {
 			?>
 			<div class="frave-claims__grid">
 				<?php
-				frave_peru_claim_field( 'order_number', __( 'Número de pedido', 'frave-peru' ), $state, array( 'required' => false, 'inputmode' => 'numeric', 'help' => __( 'Si tu reclamo es sobre una compra en la tienda.', 'frave-peru' ) ) );
-				frave_peru_claim_field( 'amount', __( 'Monto reclamado (S/)', 'frave-peru' ), $state, array( 'required' => false, 'inputmode' => 'decimal' ) );
+				frave_peru_claim_field(
+					'order_number',
+					__( 'Número de pedido', 'frave-peru' ),
+					$state,
+					array(
+						'required'  => false,
+						'inputmode' => 'numeric',
+						'help'      => __( 'Si tu reclamo es sobre una compra en la tienda.', 'frave-peru' ),
+					)
+				);
+				frave_peru_claim_field(
+					'amount',
+					__( 'Monto reclamado (S/)', 'frave-peru' ),
+					$state,
+					array(
+						'required'  => false,
+						'inputmode' => 'decimal',
+					)
+				);
 				frave_peru_claim_field( 'good_description', __( 'Descripción del producto o servicio', 'frave-peru' ), $state, array( 'class' => 'frave-claims__field--wide' ) );
 				?>
 			</div>
@@ -500,7 +578,15 @@ function frave_peru_render_claims_book(): string {
 				$state
 			);
 			frave_peru_claim_field( 'detail', __( 'Detalle', 'frave-peru' ), $state, array( 'type' => 'textarea' ) );
-			frave_peru_claim_field( 'request', __( 'Pedido', 'frave-peru' ), $state, array( 'type' => 'textarea', 'help' => __( 'Qué solución solicitas al proveedor.', 'frave-peru' ) ) );
+			frave_peru_claim_field(
+				'request',
+				__( 'Pedido', 'frave-peru' ),
+				$state,
+				array(
+					'type' => 'textarea',
+					'help' => __( 'Qué solución solicitas al proveedor.', 'frave-peru' ),
+				)
+			);
 			?>
 		</fieldset>
 

@@ -155,8 +155,8 @@ function frave_peru_add_business_days( DateTimeImmutable $start, int $days ): Da
 	$added    = 0;
 
 	while ( $added < $days ) {
-		$date = $date->modify( '+1 day' );
-		$year = (int) $date->format( 'Y' );
+		$date                = $date->modify( '+1 day' );
+		$year                = (int) $date->format( 'Y' );
 		$holidays[ $year ] ??= array_flip( frave_peru_holidays( $year ) );
 
 		if ( (int) $date->format( 'N' ) >= 6 || isset( $holidays[ $year ][ $date->format( 'Y-m-d' ) ] ) ) {
@@ -266,12 +266,12 @@ function frave_peru_render_claim_sheet( array $claim ): string {
 	$name  = trim( $claim['first_name'] . ' ' . $claim['last_name'] );
 
 	$sections = array(
-		__( 'Proveedor', 'frave-peru' )                                             => array(
+		__( 'Proveedor', 'frave-peru' ) => array(
 			__( 'Razón social', 'frave-peru' ) => $claim['provider_name'],
 			__( 'RUC', 'frave-peru' )          => $claim['provider_ruc'],
 			__( 'Domicilio', 'frave-peru' )    => $claim['provider_address'],
 		),
-		__( '1. Identificación del consumidor reclamante', 'frave-peru' )           => array(
+		__( '1. Identificación del consumidor reclamante', 'frave-peru' ) => array(
 			__( 'Nombre', 'frave-peru' )                   => $name,
 			__( 'Documento', 'frave-peru' )                => $label( frave_peru_claim_document_types(), $claim['doc_type'] ) . ' ' . $claim['doc_number'],
 			__( 'Domicilio', 'frave-peru' )                => $claim['address'],
@@ -279,7 +279,7 @@ function frave_peru_render_claim_sheet( array $claim ): string {
 			__( 'Correo electrónico', 'frave-peru' )       => $claim['email'],
 			__( 'Padre, madre o apoderado', 'frave-peru' ) => $claim['is_minor'] ? $claim['guardian'] : '',
 		),
-		__( '2. Identificación del bien contratado', 'frave-peru' )                 => array(
+		__( '2. Identificación del bien contratado', 'frave-peru' ) => array(
 			__( 'Tipo', 'frave-peru' )             => $label( frave_peru_claim_good_types(), $claim['good_type'] ),
 			__( 'Número de pedido', 'frave-peru' ) => $claim['order_number'],
 			__( 'Monto reclamado', 'frave-peru' )  => '' !== $claim['amount'] ? 'S/ ' . number_format_i18n( (float) $claim['amount'], 2 ) : '',
@@ -291,7 +291,7 @@ function frave_peru_render_claim_sheet( array $claim ): string {
 			__( 'Pedido', 'frave-peru' )  => $claim['request'],
 		),
 		__( '4. Observaciones y acciones adoptadas por el proveedor', 'frave-peru' ) => array(
-			__( 'Respuesta', 'frave-peru' )                         => '' !== ( $claim['response_date'] ?? '' ) ? $claim['response'] : __( 'Pendiente', 'frave-peru' ),
+			__( 'Respuesta', 'frave-peru' ) => '' !== ( $claim['response_date'] ?? '' ) ? $claim['response'] : __( 'Pendiente', 'frave-peru' ),
 			__( 'Fecha de comunicación de la respuesta', 'frave-peru' ) => frave_peru_format_date( $claim['response_date'] ?? '' ),
 		),
 	);
@@ -312,7 +312,10 @@ function frave_peru_render_claim_sheet( array $claim ): string {
 		</caption>
 		<?php foreach ( $sections as $section => $rows ) : ?>
 			<?php $rows = array_filter( $rows, static fn( $value ) => '' !== trim( (string) $value ) ); ?>
-			<?php if ( ! $rows ) { continue; } ?>
+			<?php
+			if ( ! $rows ) {
+				continue; }
+			?>
 			<tr><th colspan="2" scope="colgroup" style="<?php echo esc_attr( $cell ); ?>background:#f6f4f1;"><?php echo esc_html( $section ); ?></th></tr>
 			<?php foreach ( $rows as $row_label => $value ) : ?>
 				<tr>
@@ -349,7 +352,7 @@ function frave_peru_send_claim_receipt( int $post_id ): bool {
 		return false;
 	}
 
-	$type = frave_peru_claim_types()[ $claim['claim_type'] ] ?? '';
+	$type  = frave_peru_claim_types()[ $claim['claim_type'] ] ?? '';
 	$intro = sprintf(
 		/* translators: 1: "reclamo" or "queja", 2: sheet number, 3: deadline date. */
 		__( 'Registramos tu %1$s con la hoja N.º %2$s. Te responderemos a más tardar el %3$s. Conserva este correo como constancia.', 'frave-peru' ),

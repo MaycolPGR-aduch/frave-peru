@@ -127,9 +127,9 @@ function frave_peru_claims_settings_notice(): void {
 	$missing  = array_keys(
 		array_filter(
 			array(
-				__( 'razón social', 'frave-peru' )      => '' === $settings['business_name'],
-				__( 'RUC', 'frave-peru' )               => '' === $settings['ruc'],
-				__( 'domicilio', 'frave-peru' )         => '' === $settings['address'],
+				__( 'razón social', 'frave-peru' )     => '' === $settings['business_name'],
+				__( 'RUC', 'frave-peru' )              => '' === $settings['ruc'],
+				__( 'domicilio', 'frave-peru' )        => '' === $settings['address'],
 				__( 'página publicada', 'frave-peru' ) => '' === frave_peru_claims_page_url(),
 				// Sheet dates and deadlines use the site timezone.
 				__( 'zona horaria America/Lima en Ajustes → Generales', 'frave-peru' ) => ! in_array( wp_timezone_string(), array( 'America/Lima', '-05:00' ), true ),
@@ -333,7 +333,13 @@ function frave_peru_send_claim_response( int $post_id, string $response ): bool 
 	}
 
 	$now   = ( new DateTimeImmutable( 'now', wp_timezone() ) )->format( DATE_ATOM );
-	$sheet = array_merge( $claim, array( 'response' => $response, 'response_date' => $now ) );
+	$sheet = array_merge(
+		$claim,
+		array(
+			'response'      => $response,
+			'response_date' => $now,
+		)
+	);
 	$type  = strtolower( frave_peru_claim_types()[ $claim['claim_type'] ] ?? '' );
 
 	$sent = frave_peru_send_html_email(
@@ -363,7 +369,7 @@ add_filter( 'redirect_post_location', 'frave_peru_claim_redirect_location', 10, 
 
 function frave_peru_claim_mail_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
-	$results = array_filter( explode( ',', sanitize_text_field( wp_unslash( $_GET['frave_claim_mail'] ?? '' ) ) ) );
+	$results  = array_filter( explode( ',', sanitize_text_field( wp_unslash( $_GET['frave_claim_mail'] ?? '' ) ) ) );
 	$messages = array(
 		'response-sent'   => array( 'success', __( 'Respuesta enviada al consumidor. La hoja figura como respondida.', 'frave-peru' ) ),
 		'response-failed' => array( 'error', __( 'No se pudo enviar la respuesta por correo. El texto quedó guardado como borrador; revisa la configuración de correo e inténtalo otra vez.', 'frave-peru' ) ),
