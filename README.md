@@ -99,3 +99,16 @@ En producción, sube la carpeta `frave-peru` a `wp-content/plugins/` y actívala
 | `assets/checkout-fields.js` | Muestra los campos del comprobante elegido y adapta el teclado del número de documento. |
 
 Los estilos del formulario del libro están en el tema (`assets/src/css/app.css`, bloque «Libro de Reclamaciones»). Con otro tema, el formulario sigue siendo usable como HTML semántico.
+
+## Desarrollo
+
+Herramientas de calidad (Composer incluido en Laragon):
+
+```powershell
+& 'C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe' 'C:\laragon\bin\composer\composer.phar' install
+& 'C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe' vendor/bin/phpcs
+```
+
+`phpcs.xml.dist` aplica WordPress-Extra, el dominio de traducción `frave-peru`, el prefijo `frave_peru` y la compatibilidad con PHP 8.1+. `vendor/bin/phpcbf` corrige el formato automáticamente.
+
+GitHub Actions (`.github/workflows/ci.yml`) ejecuta en cada pull request y push a `main`: `php -l` con PHP 8.1 y 8.3, PHPCS y la comprobación de sintaxis del JavaScript.
