@@ -1,0 +1,7 @@
+---
+# cPanel → Git Version Control → "Deploy HEAD Commit" runs these tasks from the
+# repository folder. The destination is read from ~/.frave-deploy/frave-peru.path
+# (see GUIA_DESPLIEGUE.MD), so the same file serves staging and production.
+deployment:
+  tasks:
+    - /bin/bash bin/deploy-cpanel.sh

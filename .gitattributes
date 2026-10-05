@@ -10,3 +10,16 @@
 *.webp binary
 *.woff binary
 *.woff2 binary
+
+# Not deployed: development tooling and internal documentation.
+# git archive (bin/deploy-cpanel.sh, zip package) leaves these out of the plugin.
+/.cpanel.yml export-ignore
+/.editorconfig export-ignore
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/bin export-ignore
+/composer.json export-ignore
+/composer.lock export-ignore
+/phpcs.xml.dist export-ignore
+/*.md export-ignore
