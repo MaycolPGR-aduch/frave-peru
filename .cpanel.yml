@@ -1,7 +1,0 @@
----
-# cPanel → Git Version Control → "Deploy HEAD Commit" runs these tasks from the
-# repository folder. The destination is read from ~/.frave-deploy/<clone folder>.path
-# (see GUIA_DESPLIEGUE.MD in the theme), so staging and production clones can coexist.
-deployment:
-  tasks:
-    - /bin/bash bin/deploy-cpanel.sh

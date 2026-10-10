@@ -12,8 +12,7 @@
 *.woff2 binary
 
 # Not deployed: development tooling and internal documentation.
-# git archive (bin/deploy-cpanel.sh, zip package) leaves these out of the plugin.
-/.cpanel.yml export-ignore
+# git archive (bin/deploy.sh, zip package) leaves these out of the plugin.
 /.editorconfig export-ignore
 /.gitattributes export-ignore
 /.github export-ignore
