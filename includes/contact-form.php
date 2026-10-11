@@ -14,17 +14,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const FRAVE_PERU_CONTACT_RATE_LIMIT = 5; // Messages per hour from one IP address.
 
+/** In catalog mode there are no orders or deliveries to ask about: the form gathers leads. */
 function frave_peru_contact_subjects(): array {
-	return (array) apply_filters(
-		'frave_peru_contact_subjects',
-		array(
+	if ( frave_peru_catalog_mode() ) {
+		$subjects = array(
+			'cotizacion' => __( 'Solicitar una cotización', 'frave-peru' ),
+			'productos'  => __( 'Consulta sobre productos', 'frave-peru' ),
+			'mayorista'  => __( 'Distribución y compras por mayor', 'frave-peru' ),
+			'proveedor'  => __( 'Quiero ser proveedor', 'frave-peru' ),
+			'otro'       => __( 'Otro tema', 'frave-peru' ),
+		);
+	} else {
+		$subjects = array(
 			'productos' => __( 'Consulta sobre productos', 'frave-peru' ),
 			'pedido'    => __( 'Un pedido realizado', 'frave-peru' ),
 			'envios'    => __( 'Envíos y entregas', 'frave-peru' ),
 			'mayorista' => __( 'Compras por mayor', 'frave-peru' ),
 			'otro'      => __( 'Otro tema', 'frave-peru' ),
-		)
-	);
+		);
+	}
+	return (array) apply_filters( 'frave_peru_contact_subjects', $subjects );
+}
+
+/**
+ * Product a "Solicitar cotización" link points to (?producto=ID), if visitors can see it.
+ * Theme links add the parameter to the contact page URL.
+ */
+function frave_peru_contact_requested_product(): ?WC_Product {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
+	$product_id = isset( $_GET['producto'] ) ? absint( $_GET['producto'] ) : 0;
+	$product    = $product_id ? wc_get_product( $product_id ) : null;
+	if ( ! $product || 'publish' !== $product->get_status() || ! $product->is_visible() ) {
+		return null;
+	}
+	return $product;
 }
 
 function frave_peru_contact_recipient(): string {
@@ -334,7 +357,7 @@ function frave_peru_contact_field( string $key, string $label, array $state, arr
 	<?php
 }
 
-/** Prefill name and email for signed-in customers. */
+/** Prefill name and email for signed-in customers, and the quote request for a product. */
 function frave_peru_contact_prefill(): array {
 	$values = frave_peru_contact_defaults();
 	if ( is_user_logged_in() && function_exists( 'WC' ) && WC()->customer ) {
@@ -342,6 +365,17 @@ function frave_peru_contact_prefill(): array {
 		$values['name']  = trim( $customer->get_billing_first_name() . ' ' . $customer->get_billing_last_name() );
 		$values['email'] = $customer->get_billing_email();
 		$values['phone'] = $customer->get_billing_phone();
+	}
+
+	$product = frave_peru_contact_requested_product();
+	if ( $product ) {
+		$subjects          = frave_peru_contact_subjects();
+		$values['subject'] = isset( $subjects['cotizacion'] ) ? 'cotizacion' : $values['subject'];
+		$values['message'] = $product->get_sku()
+			/* translators: 1: product name, 2: product SKU, 3: product URL. */
+			? sprintf( __( "Hola, quisiera una cotización de %1\$s (código %2\$s).\n%3\$s\n\n", 'frave-peru' ), $product->get_name(), $product->get_sku(), $product->get_permalink() )
+			/* translators: 1: product name, 2: product URL. */
+			: sprintf( __( "Hola, quisiera una cotización de %1\$s.\n%2\$s\n\n", 'frave-peru' ), $product->get_name(), $product->get_permalink() );
 	}
 	return $values;
 }
@@ -425,16 +459,18 @@ function frave_peru_render_contact_form(): string {
 					'options' => frave_peru_contact_subjects(),
 				)
 			);
-			frave_peru_contact_field(
-				'order_number',
-				__( 'Número de pedido', 'frave-peru' ),
-				$state,
-				array(
-					'required'  => false,
-					'maxlength' => 20,
-					'help'      => __( 'Si tu consulta es sobre una compra.', 'frave-peru' ),
-				)
-			);
+			if ( ! frave_peru_catalog_mode() ) {
+				frave_peru_contact_field(
+					'order_number',
+					__( 'Número de pedido', 'frave-peru' ),
+					$state,
+					array(
+						'required'  => false,
+						'maxlength' => 20,
+						'help'      => __( 'Si tu consulta es sobre una compra.', 'frave-peru' ),
+					)
+				);
+			}
 			frave_peru_contact_field(
 				'message',
 				__( 'Mensaje', 'frave-peru' ),
