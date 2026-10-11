@@ -1,6 +1,22 @@
 # Frave Perú
 
-Plugin de WordPress con los requisitos comerciales de Perú para la tienda Frave. Vive fuera del tema porque guarda datos de pedidos: si el tema cambia, los pedidos y su comprobante se conservan.
+Plugin de WordPress con los requisitos comerciales de Frave en Perú: modo catálogo, comprobante de pago, Libro de Reclamaciones y formulario de contacto. Vive fuera del tema porque guarda datos de pedidos y decide qué se vende: si el tema cambia, los pedidos, su comprobante y el modo catálogo se conservan.
+
+## Modo catálogo
+
+Frave pospuso la venta en línea (octubre de 2026): la web muestra los productos y los clientes piden cotización. El interruptor está en **WooCommerce → Ajustes → Productos → Modo catálogo** y viene **activado por defecto** (opción `frave_peru_catalog_mode`, `yes`/`no`; el filtro del mismo nombre permite forzarlo).
+
+Con el modo activo:
+
+- Ningún producto ni variación se puede comprar; los carritos guardados de antes se vacían solos.
+- Los precios y la etiqueta «¡Oferta!» desaparecen para los visitantes en todas las páginas, bloques e incrustaciones, en la respuesta pública `?wc-ajax=get_variation` y en los datos estructurados (sin `offers`). En el administrador se siguen viendo.
+- La ficha y el listado pierden el precio y los botones de compra (el tema pone en su lugar «Ver detalles» y el bloque de cotización).
+- El carrito, el checkout y Mi cuenta redirigen al catálogo.
+- No se puede ordenar por precio; `min_price`, `max_price` y `orderby=price` se quitan de la URL con una redirección.
+- La Store API pública de WooCommerce (`/wp-json/wc/store`) se cierra para quien no gestiona la tienda.
+- El formulario de contacto cambia sus temas (ver más abajo) y quita el número de pedido.
+
+Al desactivarlo vuelve la tienda con su configuración: el checkout, el comprobante y los pedidos no se tocan.
 
 ## Requisitos
 
@@ -60,7 +76,9 @@ Cada hoja es una entrada privada del tipo `frave_reclamo`. Metadatos: `_frave_cl
 
 Shortcode `[frave_contacto]`. El tema Frave lo añade solo en las páginas con la plantilla **Contacto** (filtro `frave_peru_is_contact_page`).
 
-- Campos: nombre, correo, teléfono (opcional), tema, número de pedido (opcional), mensaje y consentimiento de datos con enlace a la política de privacidad publicada. Los temas se cambian con el filtro `frave_peru_contact_subjects`.
+- Campos: nombre, correo, teléfono (opcional), tema, número de pedido (opcional, solo con la tienda activa), mensaje y consentimiento de datos con enlace a la política de privacidad publicada. Los temas se cambian con el filtro `frave_peru_contact_subjects`.
+- Temas en modo catálogo: solicitar una cotización, consulta sobre productos, distribución y compras por mayor, quiero ser proveedor y otro tema. Con la tienda activa: productos, un pedido realizado, envíos, compras por mayor y otro tema.
+- **Cotización de un producto:** con `?producto=ID` en la URL de la página de contacto (el tema lo usa en «Solicitar cotización»), el formulario se abre con el tema «Solicitar una cotización» y el mensaje empieza con el nombre, el SKU y el enlace del producto. Solo se aceptan productos publicados y visibles en el catálogo.
 - Cada mensaje se guarda en **Mensajes** (tipo `frave_mensaje`, privado) y se envía a la dirección de **Mensajes → Ajustes** o, si está vacía, al correo del administrador. Responder al correo escribe al remitente. El listado indica si el aviso por correo falló.
 - No se envía copia al remitente: permitiría usar el formulario para mandar correo a cualquier dirección.
 - Los mensajes se pueden borrar (por ejemplo, ante una solicitud de eliminación de datos); no se pueden crear ni editar desde el administrador.
