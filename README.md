@@ -10,7 +10,7 @@ Con el modo activo:
 
 - Ningún producto ni variación se puede comprar; los carritos guardados de antes se vacían solos.
 - Los precios y la etiqueta «¡Oferta!» desaparecen para los visitantes en todas las páginas, bloques e incrustaciones, en la respuesta pública `?wc-ajax=get_variation` y en los datos estructurados (sin `offers`). En el administrador se siguen viendo.
-- La ficha y el listado pierden el precio y los botones de compra (el tema pone en su lugar «Ver detalles» y el bloque de cotización).
+- La ficha y el listado pierden el precio y los botones de compra (el tema pone en su lugar «Ver detalles» y el bloque de cotización), y la ficha deja de mostrar la pestaña de valoraciones.
 - El carrito, el checkout y Mi cuenta redirigen al catálogo.
 - No se puede ordenar por precio; `min_price`, `max_price` y `orderby=price` se quitan de la URL con una redirección.
 - La Store API pública de WooCommerce (`/wp-json/wc/store`) se cierra para quien no gestiona la tienda.

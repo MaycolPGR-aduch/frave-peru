@@ -78,6 +78,15 @@ function frave_peru_catalog_mode_templates(): void {
 }
 add_action( 'wp', 'frave_peru_catalog_mode_templates' );
 
+/** Reviews ask about a purchase that cannot happen online; the store setting is left as it is. */
+function frave_peru_catalog_mode_product_tabs( array $tabs ): array {
+	if ( frave_peru_catalog_mode() ) {
+		unset( $tabs['reviews'] );
+	}
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'frave_peru_catalog_mode_product_tabs', 99 );
+
 /** Cart, checkout and account have nothing to show: send visitors to the catalog. */
 function frave_peru_catalog_mode_redirect(): void {
 	if ( ! frave_peru_catalog_mode() || ! ( is_cart() || is_checkout() || is_account_page() ) ) {
