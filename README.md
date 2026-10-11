@@ -82,7 +82,9 @@ La carpeta del plugin está enlazada con una unión de directorio (*junction*) e
 New-Item -ItemType Junction -Path 'D:\Frave-web\.local-wordpress\wordpress\wp-content\plugins\frave-peru' -Target 'D:\Frave-web\frave-peru'
 ```
 
-En producción, sube la carpeta `frave-peru` a `wp-content/plugins/` y actívala en **Plugins**.
+## Despliegue
+
+En Hostinger, el repositorio se clona por SSH en `~/repos/frave-peru` y se publica con `git pull --ff-only && bash bin/deploy.sh`. El script copia en la ruta indicada en `~/.frave-deploy/<carpeta del clon>.path` solo los archivos del plugin (las reglas `export-ignore` de `.gitattributes` excluyen herramientas y documentación), guarda la versión anterior para `--rollback` y vacía la caché de LiteSpeed con WP-CLI. Sin SSH, genera el paquete con `git archive --format=zip --prefix=frave-peru/ -o frave-peru.zip HEAD` y súbelo en *Plugins → Añadir → Subir plugin*. El procedimiento completo, compartido con el tema, está en `GUIA_DESPLIEGUE.MD` del repositorio [Frave-theme](https://github.com/MaycolPGR-aduch/Frave-theme).
 
 ## Estructura
 
@@ -96,6 +98,7 @@ En producción, sube la carpeta `frave-peru` a `wp-content/plugins/` y actívala
 | `includes/claims.php` | Libro de Reclamaciones: tipo de entrada, numeración, plazos, hoja HTML y correos. |
 | `includes/claims-form.php` | Shortcode `[frave_libro_reclamaciones]`, validación, antispam y confirmación. |
 | `includes/claims-admin.php` | Ajustes, listado de hojas, respuesta al consumidor y avisos del administrador. |
+| `bin/deploy.sh` | Despliegue desde un clon de Git en el servidor, con reversión y vaciado de caché. |
 | `assets/checkout-fields.js` | Muestra los campos del comprobante elegido y adapta el teclado del número de documento. |
 
 Los estilos del formulario del libro están en el tema (`assets/src/css/app.css`, bloque «Libro de Reclamaciones»). Con otro tema, el formulario sigue siendo usable como HTML semántico.
