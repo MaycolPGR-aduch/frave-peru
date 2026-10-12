@@ -185,3 +185,12 @@ function frave_peru_catalog_mode_store_api( array $endpoints ): array {
 	return $endpoints;
 }
 add_filter( 'rest_endpoints', 'frave_peru_catalog_mode_store_api', 99 );
+
+/**
+ * Order attribution records where buyers come from in sbjs_* cookies on every visit; with
+ * no orders to attribute they would only track visitors, so it stays off in catalog mode.
+ */
+function frave_peru_catalog_mode_order_attribution( $allow ): bool {
+	return frave_peru_catalog_mode() ? false : (bool) $allow;
+}
+add_filter( 'wc_order_attribution_allow_tracking', 'frave_peru_catalog_mode_order_attribution' );

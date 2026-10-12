@@ -22,6 +22,7 @@ Al desactivarlo vuelve la tienda con su configuración: el checkout, el comproba
 
 - La lista pública de usuarios de la API REST, los archivos de autor (`?author=`), el mapa de usuarios y el autor de las vistas previas oEmbed quedan ocultos: revelarían el nombre de acceso del personal.
 - En modo catálogo, el carrito, la finalización de compra y Mi cuenta salen del mapa del sitio, porque solo redirigen al catálogo.
+- En modo catálogo, la atribución de pedidos de WooCommerce no registra visitas (sin cookies `sbjs_*`): no hay pedidos que atribuir.
 
 ## Requisitos
 
