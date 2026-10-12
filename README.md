@@ -18,6 +18,11 @@ Con el modo activo:
 
 Al desactivarlo vuelve la tienda con su configuración: el checkout, el comprobante y los pedidos no se tocan.
 
+## Privacidad del sitio
+
+- La lista pública de usuarios de la API REST, los archivos de autor (`?author=`), el mapa de usuarios y el autor de las vistas previas oEmbed quedan ocultos: revelarían el nombre de acceso del personal.
+- En modo catálogo, el carrito, la finalización de compra y Mi cuenta salen del mapa del sitio, porque solo redirigen al catálogo.
+
 ## Requisitos
 
 - WordPress 6.9+, PHP 8.1+ y WooCommerce 10.8+ (validado con WooCommerce 11.1.2 y PHP 8.3.30).
