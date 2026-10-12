@@ -50,6 +50,17 @@ function frave_peru_contact_requested_product(): ?WC_Product {
 	return $product;
 }
 
+/**
+ * Product line or subcategory a quote link points to (?linea=slug), as on the theme's
+ * line pages.
+ */
+function frave_peru_contact_requested_category(): ?WP_Term {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
+	$slug = isset( $_GET['linea'] ) ? sanitize_title( wp_unslash( $_GET['linea'] ) ) : '';
+	$term = '' !== $slug ? get_term_by( 'slug', $slug, 'product_cat' ) : false;
+	return $term instanceof WP_Term ? $term : null;
+}
+
 function frave_peru_contact_recipient(): string {
 	$email = (string) get_option( 'frave_peru_contact_email', '' );
 	return is_email( $email ) ? $email : (string) get_option( 'admin_email' );
@@ -357,7 +368,7 @@ function frave_peru_contact_field( string $key, string $label, array $state, arr
 	<?php
 }
 
-/** Prefill name and email for signed-in customers, and the quote request for a product. */
+/** Prefill name and email for signed-in customers, and the quote request for a product or a product line. */
 function frave_peru_contact_prefill(): array {
 	$values = frave_peru_contact_defaults();
 	if ( is_user_logged_in() && function_exists( 'WC' ) && WC()->customer ) {
@@ -365,6 +376,20 @@ function frave_peru_contact_prefill(): array {
 		$values['name']  = trim( $customer->get_billing_first_name() . ' ' . $customer->get_billing_last_name() );
 		$values['email'] = $customer->get_billing_email();
 		$values['phone'] = $customer->get_billing_phone();
+	}
+
+	$category = frave_peru_contact_requested_category();
+	if ( $category ) {
+		$subjects          = frave_peru_contact_subjects();
+		$values['subject'] = isset( $subjects['cotizacion'] ) ? 'cotizacion' : $values['subject'];
+		// The line is the top-level ancestor; a line itself has none.
+		$ancestors         = get_ancestors( $category->term_id, 'product_cat', 'taxonomy' );
+		$line              = $ancestors ? get_term( (int) end( $ancestors ), 'product_cat' ) : null;
+		$values['message'] = $line instanceof WP_Term
+			/* translators: 1: subcategory name, 2: product line name. */
+			? sprintf( __( "Hola, quisiera información y una cotización de %1\$s (%2\$s).\n\n", 'frave-peru' ), $category->name, $line->name )
+			/* translators: %s: product line name. */
+			: sprintf( __( "Hola, quisiera información y una cotización de la línea %s.\n\n", 'frave-peru' ), $category->name );
 	}
 
 	$product = frave_peru_contact_requested_product();

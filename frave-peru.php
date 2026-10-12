@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Frave Perú
  * Description: Requisitos comerciales de Frave en Perú: modo catálogo (productos sin venta en línea), comprobante (boleta o factura) con DNI, CE, pasaporte o RUC en el checkout clásico de WooCommerce, Libro de Reclamaciones virtual y formulario de contacto.
- * Version: 1.1.1
+ * Version: 1.2.0
  * Author: Frave
  * Requires at least: 6.9
  * Requires PHP: 8.1
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'FRAVE_PERU_VERSION', '1.1.1' );
+define( 'FRAVE_PERU_VERSION', '1.2.0' );
 define( 'FRAVE_PERU_FILE', __FILE__ );
 define( 'FRAVE_PERU_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRAVE_PERU_URL', plugin_dir_url( __FILE__ ) );
