@@ -68,13 +68,24 @@ function frave_peru_render_contact_settings_page(): void {
 }
 
 function frave_peru_messages_columns( array $columns ): array {
-	return array(
-		'cb'            => $columns['cb'] ?? '',
-		'title'         => __( 'Remitente y tema', 'frave-peru' ),
-		'frave_email'   => __( 'Correo', 'frave-peru' ),
-		'frave_order'   => __( 'Pedido', 'frave-peru' ),
-		'frave_emailed' => __( 'Aviso por correo', 'frave-peru' ),
-		'date'          => __( 'Recibido', 'frave-peru' ),
+	// In catalog mode there are no orders: the company and the line of interest matter instead.
+	$details = frave_peru_catalog_mode()
+		? array(
+			'frave_company' => __( 'Empresa', 'frave-peru' ),
+			'frave_line'    => __( 'Línea', 'frave-peru' ),
+		)
+		: array( 'frave_order' => __( 'Pedido', 'frave-peru' ) );
+	return array_merge(
+		array(
+			'cb'          => $columns['cb'] ?? '',
+			'title'       => __( 'Remitente y tema', 'frave-peru' ),
+			'frave_email' => __( 'Correo', 'frave-peru' ),
+		),
+		$details,
+		array(
+			'frave_emailed' => __( 'Aviso por correo', 'frave-peru' ),
+			'date'          => __( 'Recibido', 'frave-peru' ),
+		)
 	);
 }
 add_filter( 'manage_frave_mensaje_posts_columns', 'frave_peru_messages_columns' );
@@ -87,6 +98,13 @@ function frave_peru_messages_column( string $column, int $post_id ): void {
 	switch ( $column ) {
 		case 'frave_email':
 			printf( '<a href="mailto:%1$s">%2$s</a>', esc_attr( $message['email'] ), esc_html( $message['email'] ) );
+			break;
+		case 'frave_company':
+			echo esc_html( '' !== (string) ( $message['company'] ?? '' ) ? $message['company'] : '—' );
+			break;
+		case 'frave_line':
+			$line = (string) ( $message['line'] ?? '' );
+			echo esc_html( '' !== $line ? ( frave_peru_contact_lines()[ $line ] ?? $line ) : '—' );
 			break;
 		case 'frave_order':
 			echo esc_html( $message['order_number'] ? '#' . $message['order_number'] : '—' );

@@ -37,6 +37,38 @@ function frave_peru_contact_subjects(): array {
 }
 
 /**
+ * Product lines a visitor can say they are interested in: the top-level product categories
+ * (except the default one), plus "several". Keys are category slugs.
+ *
+ * @return array<string, string>
+ */
+function frave_peru_contact_lines(): array {
+	$lines = array( '' => __( 'Elige una línea (opcional)', 'frave-peru' ) );
+	if ( taxonomy_exists( 'product_cat' ) ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'parent'     => 0,
+				'hide_empty' => false,
+				'exclude'    => array( (int) get_option( 'default_product_cat' ) ),
+			)
+		);
+		foreach ( is_wp_error( $terms ) ? array() : $terms as $term ) {
+			$lines[ $term->slug ] = $term->name;
+		}
+	}
+	$lines['varias'] = __( 'Varias líneas', 'frave-peru' );
+	return (array) apply_filters( 'frave_peru_contact_lines', $lines );
+}
+
+/** Slug of the product line (top-level category) a category belongs to. */
+function frave_peru_contact_line_of( WP_Term $term ): string {
+	$ancestors = get_ancestors( $term->term_id, 'product_cat', 'taxonomy' );
+	$top       = $ancestors ? get_term( (int) end( $ancestors ), 'product_cat' ) : $term;
+	return $top instanceof WP_Term ? $top->slug : '';
+}
+
+/**
  * Product a "Solicitar cotización" link points to (?producto=ID), if visitors can see it.
  * Theme links add the parameter to the contact page URL.
  */
@@ -116,6 +148,9 @@ function frave_peru_contact_defaults(): array {
 		'name'         => '',
 		'email'        => '',
 		'phone'        => '',
+		'company'      => '',
+		'city'         => '',
+		'line'         => '',
 		'subject'      => 'productos',
 		'order_number' => '',
 		'message'      => '',
@@ -128,6 +163,10 @@ function frave_peru_sanitize_contact_input( array $input ): array {
 	$values['name']         = sanitize_text_field( (string) ( $input['name'] ?? '' ) );
 	$values['email']        = sanitize_email( (string) ( $input['email'] ?? '' ) );
 	$values['phone']        = sanitize_text_field( (string) ( $input['phone'] ?? '' ) );
+	$values['company']      = sanitize_text_field( (string) ( $input['company'] ?? '' ) );
+	$values['city']         = sanitize_text_field( (string) ( $input['city'] ?? '' ) );
+	$line                   = sanitize_title( (string) ( $input['line'] ?? '' ) );
+	$values['line']         = isset( frave_peru_contact_lines()[ $line ] ) ? $line : '';
 	$values['order_number'] = ltrim( sanitize_text_field( (string) ( $input['order_number'] ?? '' ) ), '#' );
 	$values['message']      = sanitize_textarea_field( (string) ( $input['message'] ?? '' ) );
 	$subject                = (string) ( $input['subject'] ?? '' );
@@ -150,6 +189,12 @@ function frave_peru_validate_contact( array $values ): array {
 	if ( '' !== $values['phone'] && 1 !== preg_match( '/^[0-9+()\s-]{6,20}$/', $values['phone'] ) ) {
 		$errors['phone'] = __( 'Ingresa un teléfono válido o deja el campo vacío.', 'frave-peru' );
 	}
+	if ( mb_strlen( $values['company'] ) > 120 ) {
+		$errors['company'] = __( 'El nombre de la empresa admite como máximo 120 caracteres.', 'frave-peru' );
+	}
+	if ( mb_strlen( $values['city'] ) > 80 ) {
+		$errors['city'] = __( 'La ciudad admite como máximo 80 caracteres.', 'frave-peru' );
+	}
 	if ( '' === $values['subject'] ) {
 		$errors['subject'] = __( 'Elige el tema de tu mensaje.', 'frave-peru' );
 	}
@@ -162,7 +207,7 @@ function frave_peru_validate_contact( array $values ): array {
 		$errors['message'] = __( 'El mensaje admite como máximo 3000 caracteres.', 'frave-peru' );
 	}
 	if ( '' === $values['privacy'] ) {
-		$errors['privacy'] = __( 'Debes aceptar el uso de tus datos para que podamos responderte.', 'frave-peru' );
+		$errors['privacy'] = __( 'Debes autorizar el tratamiento de tus datos para que podamos responderte.', 'frave-peru' );
 	}
 	return $errors;
 }
@@ -189,9 +234,10 @@ function frave_peru_is_contact_page(): bool {
 
 /** Store the message and email the store. @return int|WP_Error */
 function frave_peru_create_contact_message( array $values ) {
-	$subject_label = frave_peru_contact_subjects()[ $values['subject'] ] ?? '';
-	unset( $values['privacy'] );
+	$subject_label          = frave_peru_contact_subjects()[ $values['subject'] ] ?? '';
 	$values['submitted_at'] = ( new DateTimeImmutable( 'now', wp_timezone() ) )->format( DATE_ATOM );
+	// Proof of consent (Ley 29733): the box was ticked when the message was sent.
+	$values['privacy'] = '1' === $values['privacy'] ? $values['submitted_at'] : '';
 
 	$post_id = wp_insert_post(
 		wp_slash(
@@ -199,7 +245,7 @@ function frave_peru_create_contact_message( array $values ) {
 				'post_type'    => 'frave_mensaje',
 				'post_status'  => 'publish',
 				'post_title'   => $values['name'] . ' · ' . $subject_label,
-				'post_excerpt' => implode( ' ', array_filter( array( $values['email'], $values['phone'], $values['order_number'] ) ) ),
+				'post_excerpt' => implode( ' ', array_filter( array( $values['company'], $values['email'], $values['phone'], $values['order_number'] ) ) ),
 				'meta_input'   => array( '_frave_message' => $values ),
 			)
 		),
@@ -233,10 +279,14 @@ function frave_peru_render_contact_message( array $values ): string {
 			__( 'Nombre', 'frave-peru' )             => $values['name'],
 			__( 'Correo electrónico', 'frave-peru' ) => $values['email'],
 			__( 'Teléfono', 'frave-peru' )           => $values['phone'],
+			__( 'Empresa', 'frave-peru' )            => $values['company'] ?? '',
+			__( 'Ciudad', 'frave-peru' )             => $values['city'] ?? '',
 			__( 'Tema', 'frave-peru' )               => frave_peru_contact_subjects()[ $values['subject'] ] ?? $values['subject'],
+			__( 'Línea de interés', 'frave-peru' )   => '' !== ( $values['line'] ?? '' ) ? ( frave_peru_contact_lines()[ $values['line'] ] ?? $values['line'] ) : '',
 			__( 'Número de pedido', 'frave-peru' )   => $values['order_number'],
 			__( 'Fecha', 'frave-peru' )              => isset( $values['submitted_at'] ) ? frave_peru_format_date( $values['submitted_at'], true ) : '',
 			__( 'Mensaje', 'frave-peru' )            => $values['message'],
+			__( 'Consentimiento', 'frave-peru' )     => ! empty( $values['privacy'] ) ? __( 'Autorizó el tratamiento de sus datos (Ley 29733)', 'frave-peru' ) : '',
 		),
 		static fn( $value ) => '' !== (string) $value
 	);
@@ -385,6 +435,7 @@ function frave_peru_contact_prefill(): array {
 		// The line is the top-level ancestor; a line itself has none.
 		$ancestors         = get_ancestors( $category->term_id, 'product_cat', 'taxonomy' );
 		$line              = $ancestors ? get_term( (int) end( $ancestors ), 'product_cat' ) : null;
+		$values['line']    = frave_peru_contact_line_of( $category );
 		$values['message'] = $line instanceof WP_Term
 			/* translators: 1: subcategory name, 2: product line name. */
 			? sprintf( __( "Hola, quisiera información y una cotización de %1\$s (%2\$s).\n\n", 'frave-peru' ), $category->name, $line->name )
@@ -396,6 +447,8 @@ function frave_peru_contact_prefill(): array {
 	if ( $product ) {
 		$subjects          = frave_peru_contact_subjects();
 		$values['subject'] = isset( $subjects['cotizacion'] ) ? 'cotizacion' : $values['subject'];
+		$categories        = get_the_terms( $product->get_id(), 'product_cat' );
+		$values['line']    = is_array( $categories ) && $categories ? frave_peru_contact_line_of( $categories[0] ) : '';
 		$values['message'] = $product->get_sku()
 			/* translators: 1: product name, 2: product SKU, 3: product URL. */
 			? sprintf( __( "Hola, quisiera una cotización de %1\$s (código %2\$s).\n%3\$s\n\n", 'frave-peru' ), $product->get_name(), $product->get_sku(), $product->get_permalink() )
@@ -476,12 +529,42 @@ function frave_peru_render_contact_form(): string {
 				)
 			);
 			frave_peru_contact_field(
+				'company',
+				__( 'Empresa o marca', 'frave-peru' ),
+				$state,
+				array(
+					'required'     => false,
+					'autocomplete' => 'organization',
+					'maxlength'    => 120,
+				)
+			);
+			frave_peru_contact_field(
+				'city',
+				__( 'Ciudad', 'frave-peru' ),
+				$state,
+				array(
+					'required'     => false,
+					'autocomplete' => 'address-level2',
+					'maxlength'    => 80,
+				)
+			);
+			frave_peru_contact_field(
 				'subject',
 				__( 'Tema', 'frave-peru' ),
 				$state,
 				array(
 					'type'    => 'select',
 					'options' => frave_peru_contact_subjects(),
+				)
+			);
+			frave_peru_contact_field(
+				'line',
+				__( 'Línea de interés', 'frave-peru' ),
+				$state,
+				array(
+					'type'     => 'select',
+					'required' => false,
+					'options'  => frave_peru_contact_lines(),
 				)
 			);
 			if ( ! frave_peru_catalog_mode() ) {
@@ -518,7 +601,7 @@ function frave_peru_render_contact_form(): string {
 					printf(
 						wp_kses(
 							/* translators: %s: privacy policy URL. */
-							__( 'Autorizo el uso de mis datos para responder a este mensaje, según la <a href="%s" target="_blank" rel="noopener">política de privacidad</a>.', 'frave-peru' ),
+							__( 'Autorizo el tratamiento de mis datos personales para atender mi consulta, conforme a la Ley N.° 29733 de Protección de Datos Personales y la <a href="%s" target="_blank" rel="noopener">política de privacidad</a>.', 'frave-peru' ),
 							array(
 								'a' => array(
 									'href'   => true,
@@ -530,7 +613,7 @@ function frave_peru_render_contact_form(): string {
 						esc_url( $privacy )
 					);
 				} else {
-					esc_html_e( 'Autorizo el uso de mis datos para responder a este mensaje.', 'frave-peru' );
+					esc_html_e( 'Autorizo el tratamiento de mis datos personales para atender mi consulta, conforme a la Ley N.° 29733 de Protección de Datos Personales.', 'frave-peru' );
 				}
 				?>
 			</label>
@@ -538,6 +621,7 @@ function frave_peru_render_contact_form(): string {
 				<span class="frave-claims__error" id="frave-contact-privacy-error"><?php echo esc_html( $privacy_error ); ?></span>
 			<?php endif; ?>
 		</p>
+		<p class="frave-claims__help frave-contact__rights"><?php esc_html_e( 'Usamos tus datos solo para responderte. Puedes pedir acceder a ellos, rectificarlos, cancelarlos u oponerte a su uso escribiéndonos por este mismo formulario.', 'frave-peru' ); ?></p>
 
 		<?php frave_peru_spam_fields(); ?>
 		<p class="frave-claims__actions">
