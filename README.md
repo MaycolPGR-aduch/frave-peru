@@ -83,7 +83,8 @@ Cada hoja es una entrada privada del tipo `frave_reclamo`. Metadatos: `_frave_cl
 
 Shortcode `[frave_contacto]`. El tema Frave lo añade solo en las páginas con la plantilla **Contacto** (filtro `frave_peru_is_contact_page`).
 
-- Campos: nombre, correo, teléfono (opcional), tema, número de pedido (opcional, solo con la tienda activa), mensaje y consentimiento de datos con enlace a la política de privacidad publicada. Los temas se cambian con el filtro `frave_peru_contact_subjects`.
+- Campos en dos bloques, «Tus datos» y «Tu consulta»: nombre, correo, teléfono (opcional), empresa, ciudad, tema, línea de interés, número de pedido (opcional, solo con la tienda activa), mensaje y consentimiento de datos con enlace a la política de privacidad publicada. El tema y la línea son botones de opción (tipo `choice` de `frave_peru_contact_field()`), que el tema muestra como píldoras; la línea termina con «Aún no lo sé». Los temas se cambian con el filtro `frave_peru_contact_subjects`.
+- Tras el envío, la confirmación ejecuta la acción `frave_peru_contact_success`, que el tema usa para ofrecer WhatsApp y el catálogo.
 - Temas en modo catálogo: solicitar una cotización, consulta sobre productos, distribución y compras por mayor, quiero ser proveedor y otro tema. Con la tienda activa: productos, un pedido realizado, envíos, compras por mayor y otro tema.
 - **Cotización de un producto:** con `?producto=ID` en la URL de la página de contacto (el tema lo usa en «Solicitar cotización»), el formulario se abre con el tema «Solicitar una cotización» y el mensaje empieza con el nombre, el SKU y el enlace del producto. Solo se aceptan productos publicados y visibles en el catálogo.
 - **Datos del contacto (B2B):** empresa o marca, ciudad y línea de interés (opcionales). La línea se elige entre las categorías de producto de primer nivel y se completa sola desde `?linea=` o `?producto=`.

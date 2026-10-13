@@ -377,7 +377,38 @@ function frave_peru_contact_field( string $key, string $label, array $state, arr
 	$error = $state['errors'][ $key ] ?? '';
 	$value = (string) ( $state['values'][ $key ] ?? '' );
 
-	$described      = implode( ' ', array_filter( array( $args['help'] ? $id . '-help' : '', $error ? $id . '-error' : '' ) ) );
+	$described = implode( ' ', array_filter( array( $args['help'] ? $id . '-help' : '', $error ? $id . '-error' : '' ) ) );
+
+	// A short list of options reads better as buttons than as a dropdown.
+	if ( 'choice' === $args['type'] ) {
+		?>
+		<fieldset class="frave-claims__field frave-contact__choice <?php echo esc_attr( $args['class'] ); ?><?php echo $error ? ' has-error' : ''; ?>" id="<?php echo esc_attr( $id ); ?>"<?php echo $described ? ' aria-describedby="' . esc_attr( $described ) . '"' : ''; ?>>
+			<legend>
+				<?php echo esc_html( $label ); ?>
+				<?php if ( $args['required'] ) : ?>
+					<span class="frave-claims__required" aria-hidden="true">*</span>
+				<?php endif; ?>
+			</legend>
+			<div class="frave-contact__options">
+				<?php foreach ( $args['options'] as $option_value => $option_label ) : ?>
+					<?php $option_id = $id . '-' . ( '' === (string) $option_value ? 'ninguna' : sanitize_html_class( (string) $option_value ) ); ?>
+					<label class="frave-contact__option frave-contact__option--<?php echo esc_attr( '' === (string) $option_value ? 'ninguna' : sanitize_html_class( (string) $option_value ) ); ?>" for="<?php echo esc_attr( $option_id ); ?>">
+						<input type="radio" id="<?php echo esc_attr( $option_id ); ?>" name="<?php echo esc_attr( 'contact[' . $key . ']' ); ?>" value="<?php echo esc_attr( (string) $option_value ); ?>" <?php checked( $value, (string) $option_value ); ?><?php echo $args['required'] ? ' required' : ''; ?><?php echo $error ? ' aria-invalid="true"' : ''; ?>>
+						<span><?php echo esc_html( $option_label ); ?></span>
+					</label>
+				<?php endforeach; ?>
+			</div>
+			<?php if ( $args['help'] ) : ?>
+				<span class="frave-claims__help" id="<?php echo esc_attr( $id . '-help' ); ?>"><?php echo esc_html( $args['help'] ); ?></span>
+			<?php endif; ?>
+			<?php if ( $error ) : ?>
+				<span class="frave-claims__error" id="<?php echo esc_attr( $id . '-error' ); ?>"><?php echo esc_html( $error ); ?></span>
+			<?php endif; ?>
+		</fieldset>
+		<?php
+		return;
+	}
+
 	$attributes     = array_filter(
 		array(
 			'id'               => $id,
@@ -470,9 +501,14 @@ function frave_peru_render_contact_form(): string {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
 	if ( 'enviado' === sanitize_key( wp_unslash( $_GET['mensaje'] ?? '' ) ) ) {
 		?>
-		<div class="frave-claims__notice frave-claims__notice--success" role="status">
+		<div class="frave-claims__notice frave-claims__notice--success frave-contact__success" role="status">
+			<span class="frave-contact__success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
 			<h2><?php esc_html_e( 'Mensaje enviado', 'frave-peru' ); ?></h2>
-			<p><?php esc_html_e( 'Gracias por escribirnos. Te responderemos al correo que indicaste.', 'frave-peru' ); ?></p>
+			<p><?php esc_html_e( 'Gracias por escribirnos. Revisaremos tu consulta y te responderemos al correo que indicaste.', 'frave-peru' ); ?></p>
+			<?php
+			/** Lets the theme add next steps (WhatsApp, catalog) under the confirmation. */
+			do_action( 'frave_peru_contact_success' );
+			?>
 		</div>
 		<?php
 		echo '</div>';
@@ -495,14 +531,18 @@ function frave_peru_render_contact_form(): string {
 						<?php if ( 'form' === $field ) : ?>
 							<li><?php echo esc_html( $message ); ?></li>
 						<?php else : ?>
-							<li><a href="#frave-contact-<?php echo esc_attr( str_replace( '_', '-', $field ) ); ?>"><?php echo esc_html( $message ); ?></a></li>
+							<li><a href="#frave-contact-<?php echo esc_attr( str_replace( '_', '-', $field ) . ( 'subject' === $field ? '-' . array_key_first( frave_peru_contact_subjects() ) : '' ) ); ?>"><?php echo esc_html( $message ); ?></a></li>
 						<?php endif; ?>
 					<?php endforeach; ?>
 				</ul>
 			</div>
 		<?php endif; ?>
 
-		<div class="frave-claims__grid">
+		<p class="frave-contact__required-note"><?php esc_html_e( 'Los campos con * son obligatorios.', 'frave-peru' ); ?></p>
+
+		<fieldset class="frave-contact__group">
+			<legend><span class="frave-contact__step" aria-hidden="true">1</span><?php esc_html_e( 'Tus datos', 'frave-peru' ); ?></legend>
+			<div class="frave-claims__grid">
 			<?php
 			frave_peru_contact_field(
 				'name',
@@ -553,23 +593,37 @@ function frave_peru_render_contact_form(): string {
 					'maxlength'    => 80,
 				)
 			);
+			?>
+			</div>
+		</fieldset>
+
+		<fieldset class="frave-contact__group">
+			<legend><span class="frave-contact__step" aria-hidden="true">2</span><?php esc_html_e( 'Tu consulta', 'frave-peru' ); ?></legend>
+			<div class="frave-claims__grid">
+			<?php
 			frave_peru_contact_field(
 				'subject',
-				__( 'Tema', 'frave-peru' ),
+				__( '¿En qué te podemos ayudar?', 'frave-peru' ),
 				$state,
 				array(
-					'type'    => 'select',
+					'type'    => 'choice',
 					'options' => frave_peru_contact_subjects(),
+					'class'   => 'frave-claims__field--wide',
 				)
 			);
+			// As buttons, «not sure yet» goes last instead of the dropdown's placeholder.
+			$lines = frave_peru_contact_lines();
+			unset( $lines[''] );
+			$lines[''] = __( 'Aún no lo sé', 'frave-peru' );
 			frave_peru_contact_field(
 				'line',
 				__( 'Línea de interés', 'frave-peru' ),
 				$state,
 				array(
-					'type'     => 'select',
+					'type'     => 'choice',
 					'required' => false,
-					'options'  => frave_peru_contact_lines(),
+					'options'  => $lines,
+					'class'    => 'frave-claims__field--wide',
 				)
 			);
 			if ( ! frave_peru_catalog_mode() ) {
@@ -592,10 +646,12 @@ function frave_peru_render_contact_form(): string {
 					'type'      => 'textarea',
 					'maxlength' => 3000,
 					'class'     => 'frave-claims__field--wide',
+					'help'      => __( 'Cuéntanos qué producto desarrollas, las cantidades aproximadas y cualquier detalle útil.', 'frave-peru' ),
 				)
 			);
 			?>
-		</div>
+			</div>
+		</fieldset>
 
 		<?php $privacy_error = $errors['privacy'] ?? ''; ?>
 		<p class="frave-claims__checkbox<?php echo $privacy_error ? ' has-error' : ''; ?>">
@@ -630,7 +686,10 @@ function frave_peru_render_contact_form(): string {
 
 		<?php frave_peru_spam_fields(); ?>
 		<p class="frave-claims__actions">
-			<button type="submit" name="frave_contact_submit" value="1" class="button button--primary"><?php esc_html_e( 'Enviar mensaje', 'frave-peru' ); ?></button>
+			<button type="submit" name="frave_contact_submit" value="1" class="button button--primary frave-contact__submit" data-sending-label="<?php esc_attr_e( 'Enviando…', 'frave-peru' ); ?>">
+				<span class="frave-contact__submit-label"><?php esc_html_e( 'Enviar mensaje', 'frave-peru' ); ?></span>
+				<svg class="frave-contact__submit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+			</button>
 		</p>
 	</form>
 	<?php
