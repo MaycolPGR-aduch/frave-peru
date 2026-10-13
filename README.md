@@ -15,6 +15,7 @@ Con el modo activo:
 - No se puede ordenar por precio; `min_price`, `max_price` y `orderby=price` se quitan de la URL con una redirección.
 - La Store API pública de WooCommerce (`/wp-json/wc/store`) se cierra para quien no gestiona la tienda.
 - El formulario de contacto cambia sus temas (ver más abajo) y quita el número de pedido.
+- No se cargan los scripts de compra de WooCommerce (añadir al carrito, blockUI, cookies, fragmentos del carrito) ni los de atribución de pedidos, y con ellos desaparece jQuery de las páginas que solo lo usaban para eso. La galería de la ficha conserva los suyos.
 
 Al desactivarlo vuelve la tienda con su configuración: el checkout, el comprobante y los pedidos no se tocan.
 
@@ -92,6 +93,7 @@ Shortcode `[frave_contacto]`. El tema Frave lo añade solo en las páginas con l
 - No se envía copia al remitente: permitiría usar el formulario para mandar correo a cualquier dirección.
 - Los mensajes se pueden borrar (por ejemplo, ante una solicitud de eliminación de datos); no se pueden crear ni editar desde el administrador.
 - Mismo antispam que el Libro de Reclamaciones (`includes/antispam.php`), con un límite de 5 mensajes por hora por IP. Si el cliente inició sesión, se rellenan su nombre, correo y teléfono.
+- **Caché:** la página de contacto se puede guardar en la caché de LiteSpeed, porque el formulario no usa nonce y todo lo que muestra en una visita normal depende solo de la URL (`?linea=`, `?producto=`, `?mensaje=enviado`). Solo la respuesta a un envío, que puede repetir lo que escribió la persona, se marca como no cacheable. Las cachés no sirven páginas guardadas a quien inició sesión.
 
 ## Términos y condiciones en el checkout
 

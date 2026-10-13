@@ -194,3 +194,19 @@ function frave_peru_catalog_mode_order_attribution( $allow ): bool {
 	return frave_peru_catalog_mode() ? false : (bool) $allow;
 }
 add_filter( 'wc_order_attribution_allow_tracking', 'frave_peru_catalog_mode_order_attribution' );
+
+/**
+ * Without purchases, WooCommerce's cart scripts (AJAX add to cart, blockUI, cookies) and
+ * the order attribution scripts have nothing to do on any page, and leaving them out also
+ * drops jQuery wherever only they needed it. The product gallery keeps its own scripts.
+ */
+function frave_peru_catalog_mode_scripts(): void {
+	if ( ! frave_peru_catalog_mode() ) {
+		return;
+	}
+	$handles = array( 'wc-add-to-cart', 'woocommerce', 'wc-cart-fragments', 'wc-jquery-blockui', 'wc-js-cookie', 'sourcebuster-js', 'wc-order-attribution' );
+	foreach ( $handles as $handle ) {
+		wp_dequeue_script( $handle );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'frave_peru_catalog_mode_scripts', 99 );

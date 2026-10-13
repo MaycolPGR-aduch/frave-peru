@@ -304,20 +304,25 @@ function frave_peru_render_contact_message( array $values ): string {
 	return $html . '</table>';
 }
 
-/** Keep the page out of caches and process submissions (anti-spam: includes/antispam.php). */
+/**
+ * Process submissions (anti-spam: includes/antispam.php). The page itself can be cached:
+ * the form has no nonce and its signed timestamp stays valid, and every GET state (the
+ * line or product of ?linea= / ?producto=, the «enviado» notice) depends only on the URL.
+ * A submission with errors shows what the person typed, so that response is never cached.
+ */
 function frave_peru_handle_contact_submission(): void {
 	if ( ! frave_peru_is_contact_page() ) {
+		return;
+	}
+
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- see includes/antispam.php.
+	if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! isset( $_POST['frave_contact_submit'] ) ) {
 		return;
 	}
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
 		define( 'DONOTCACHEPAGE', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Convention read by page cache plugins.
 	}
 	nocache_headers();
-
-	// phpcs:disable WordPress.Security.NonceVerification.Missing -- see includes/antispam.php.
-	if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || ! isset( $_POST['frave_contact_submit'] ) ) {
-		return;
-	}
 	$input = isset( $_POST['contact'] ) && is_array( $_POST['contact'] ) ? wp_unslash( $_POST['contact'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized per field.
 	// phpcs:enable
 
