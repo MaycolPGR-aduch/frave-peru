@@ -63,6 +63,14 @@ El formulario sigue la estructura de la Hoja de Reclamación del Código de Prot
 
 Mientras falte algún dato, el administrador muestra un aviso con lo pendiente.
 
+Los pasos 1 a 3 se pueden hacer de una vez por SSH, desde la carpeta del sitio y con el clon del plugin:
+
+```bash
+wp eval-file ~/repos/frave-peru/bin/configurar-libro.php "RAZÓN SOCIAL" RUC "DOMICILIO" correo-de-avisos@dominio
+```
+
+El script valida el RUC, pone la zona horaria America/Lima, publica la página `/libro-de-reclamaciones/` con el formulario (reutiliza la que exista sin borrar su contenido) y guarda los datos del proveedor. Se puede ejecutar de nuevo para corregirlos.
+
 ### Qué hace
 
 - **Numeración correlativa por año** (`000001-2026`), única aunque dos personas envíen a la vez.
